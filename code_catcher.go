@@ -53,6 +53,11 @@ func (cc *codeCatcher) isFilteredCode() bool {
 	return cc.caughtFilteredCode
 }
 
+// getHeaders returns the headers that were set by the upstream handler.
+func (cc *codeCatcher) getHeaders() http.Header {
+	return cc.headerMap
+}
+
 func (cc *codeCatcher) Write(buf []byte) (int, error) {
 	// If WriteHeader was already called from the caller, this is a NOOP.
 	// Otherwise, cc.code is actually a 200 here.

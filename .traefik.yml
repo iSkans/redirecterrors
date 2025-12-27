@@ -1,15 +1,20 @@
 displayName: Redirect Errors
 type: middleware
-
 import: github.com/iskans/redirecterrors
-
 summary: "Redirect to an URL on HTTP error status codes."
-
 testData:
   status:
     - "401-403"
   target: "http://example.test/"
   outputStatus: "303"
-  outputResponseHeaders:
-    Set-Cookie: "session=; Path=/; Domain=.example.com; HttpOnly; Secure; Max-Age=0"
+  outputAddHeaders:
     X-Custom-Header: "custom-value"
+  outputRemoveHeaders:
+    - "^X-Auth-.+$"
+    - "^Sec-.+$"
+  outputAddCookies:
+    - "session=123; Path=/; Domain=.example.com; HttpOnly; Secure"
+    - "mycookie=yes; Path=/; Domain=.example.com; HttpOnly; Secure"
+  outputRemoveCookies:
+    - "^[^_]+_proxy_.+$"
+    - "^[^_]+_session_.+$"
