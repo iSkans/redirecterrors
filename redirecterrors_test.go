@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/esnunes/redirecterrors"
+	"github.com/iskans/redirecterrors"
 )
 
 func TestBadConfig(t *testing.T) {
@@ -102,4 +102,38 @@ func assertHeader(t *testing.T, resp *http.Response, key, expected string) {
 	if resp.Header.Get(key) != expected {
 		t.Errorf("invalid header value: %s", resp.Header.Get(key))
 	}
+}
+
+func TestRedirectWithCustomHeaders(t *testing.T) {
+	cfg := redirecterrors.CreateConfig()
+	cfg.Status = []string{"401"}
+	cfg.Target = "http://target/?status={status}&url={url}"
+	cfg.OutputStatus = 302
+	cfg.OutputResponseHeaders = map[string]string{
+		"Set-Cookie":      "session=; Path=/; Domain=.example.com; HttpOnly; Secure; Max-Age=0",
+		"X-Custom-Header": "custom-value",
+	}
+
+	ctx := context.Background()
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) { rw.WriteHeader(401) })
+
+	handler, err := redirecterrors.New(ctx, next, cfg, "redirecterrors-plugin")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recorder := httptest.NewRecorder()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	handler.ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	assertHeader(t, resp, "Location", "http://target/?status=401&url=http%3A%2F%2Flocalhost")
+	assertHeader(t, resp, "Set-Cookie", "session=; Path=/; Domain=.example.com; HttpOnly; Secure; Max-Age=0")
+	assertHeader(t, resp, "X-Custom-Header", "custom-value")
+	assertCode(t, resp, 302)
 }

@@ -1,7 +1,7 @@
 displayName: Redirect Errors
 type: middleware
 
-import: github.com/esnunes/redirecterrors
+import: github.com/iskans/redirecterrors
 
 summary: "Redirect to an URL on HTTP error status codes."
 
@@ -10,3 +10,6 @@ testData:
     - "401-403"
   target: "http://example.test/"
   outputStatus: "303"
+  outputResponseHeaders:
+    Set-Cookie: "session=; Path=/; Domain=.example.com; HttpOnly; Secure; Max-Age=0"
+    X-Custom-Header: "custom-value"

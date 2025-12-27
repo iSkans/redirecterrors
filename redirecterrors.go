@@ -13,9 +13,10 @@ import (
 
 // Config the plugin configuration.
 type Config struct {
-	Status       []string `json:"status,omitempty"`
-	Target       string   `json:"target,omitempty"`
-	OutputStatus int      `json:"outputStatus,omitempty"`
+	Status                 []string          `json:"status,omitempty"`
+	Target                 string            `json:"target,omitempty"`
+	OutputStatus           int               `json:"outputStatus,omitempty"`
+	OutputResponseHeaders  map[string]string `json:"outputResponseHeaders,omitempty"`
 }
 
 // CreateConfig creates the default plugin configuration.
@@ -29,11 +30,12 @@ func CreateConfig() *Config {
 
 // RedirectErrors a RedirectErrors plugin.
 type RedirectErrors struct {
-	name           string
-	next           http.Handler
-	httpCodeRanges HTTPCodeRanges
-	target         string
-	outputStatus   int
+	name                    string
+	next                    http.Handler
+	httpCodeRanges          HTTPCodeRanges
+	target                  string
+	outputStatus            int
+	outputResponseHeaders   map[string]string
 }
 
 // New creates a new RedirectErrors plugin.
@@ -48,11 +50,12 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 	}
 
 	return &RedirectErrors{
-		httpCodeRanges: httpCodeRanges,
-		next:           next,
-		name:           name,
-		target:         config.Target,
-		outputStatus:   config.OutputStatus,
+		httpCodeRanges:        httpCodeRanges,
+		next:                  next,
+		name:                  name,
+		target:                config.Target,
+		outputStatus:          config.OutputStatus,
+		outputResponseHeaders: config.OutputResponseHeaders,
 	}, nil
 }
 
@@ -83,6 +86,9 @@ func (a *RedirectErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	println("New location:", location)
 	rw.Header().Set("Location", location)
+	for key, value := range a.outputResponseHeaders {
+		rw.Header().Set(key, value)
+	}
 	rw.WriteHeader(a.outputStatus)
 	_, err := io.WriteString(rw, "Redirecting")
 	if err != nil {
