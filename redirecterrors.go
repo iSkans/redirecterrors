@@ -111,8 +111,15 @@ func (a *RedirectErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	location := a.target
-	location = strings.ReplaceAll(location, "{status}", strconv.Itoa(code))
-	location = strings.ReplaceAll(location, "{url}", url.QueryEscape(fullURL))
+	if len(proto) != 0 {
+    	location = strings.ReplaceAll(location, "{proto}", proto)
+	}
+	if len(host) != 0 {
+        location = strings.ReplaceAll(location, "{host}", host)
+    }
+    location = strings.ReplaceAll(location, "{status}", strconv.Itoa(code))
+    location = strings.ReplaceAll(location, "{url}", fullURL)
+	location = strings.ReplaceAll(location, "{uri}", url.QueryEscape(fullURL))
 
 	println("New location:", location)
 

@@ -49,7 +49,8 @@ func TestRedirect(t *testing.T) {
 	handler.ServeHTTP(recorder, req)
 
 	resp := recorder.Result()
-	assertHeader(t, resp, "Location", "http://target/?status=401&url=http%3A%2F%2Flocalhost")
+	// {url} is no longer URL-encoded, use {uri} for encoded version
+	assertHeader(t, resp, "Location", "http://target/?status=401&url=http://localhost")
 	assertCode(t, resp, 302)
 }
 
@@ -133,7 +134,7 @@ func TestRedirectWithCustomHeaders(t *testing.T) {
 	handler.ServeHTTP(recorder, req)
 
 	resp := recorder.Result()
-	assertHeader(t, resp, "Location", "http://target/?status=401&url=http%3A%2F%2Flocalhost")
+	assertHeader(t, resp, "Location", "http://target/?status=401&url=http://localhost")
 	assertHeader(t, resp, "Set-Cookie", "session=; Path=/; Domain=.example.com; HttpOnly; Secure; Max-Age=0")
 	assertHeader(t, resp, "X-Custom-Header", "custom-value")
 	assertCode(t, resp, 302)
@@ -182,7 +183,7 @@ func TestRedirectWithRemoveHeaders(t *testing.T) {
 	handler.ServeHTTP(recorder, req)
 
 	resp := recorder.Result()
-	assertHeader(t, resp, "Location", "http://target/?status=401&url=http%3A%2F%2Flocalhost")
+	assertHeader(t, resp, "Location", "http://target/?status=401&url=http://localhost")
 	assertCode(t, resp, 302)
 
 	// These headers should be removed
@@ -385,7 +386,7 @@ func TestRedirectWithBody(t *testing.T) {
 
 	resp := recorder.Result()
 	assertCode(t, resp, 302)
-	assertHeader(t, resp, "Location", "http://target/?status=401&url=http%3A%2F%2Flocalhost")
+	assertHeader(t, resp, "Location", "http://target/?status=401&url=http://localhost")
 	// Body should be "Redirecting" not the original "error body"
 	body := recorder.Body.String()
 	if body != "Redirecting" {
@@ -421,7 +422,7 @@ func TestRedirectWithoutWriteHeader(t *testing.T) {
 
 	resp := recorder.Result()
 	assertCode(t, resp, 302)
-	assertHeader(t, resp, "Location", "http://target/?status=200&url=http%3A%2F%2Flocalhost")
+	assertHeader(t, resp, "Location", "http://target/?status=200&url=http://localhost")
 }
 
 func TestStatusCodeRanges(t *testing.T) {
@@ -555,8 +556,8 @@ func TestFullURLWithForwardedHeaders(t *testing.T) {
 
 	resp := recorder.Result()
 	location := resp.Header.Get("Location")
-	// The URL is URL-encoded in the template replacement
-	expected := "http://target/?return=https%3A%2F%2Fexample.com%2Fapi%2Ftest"
+	// {url} is no longer URL-encoded (use {uri} for encoded)
+	expected := "http://target/?return=https://example.com/api/test"
 	if location != expected {
 		t.Errorf("expected location '%s', got '%s'", expected, location)
 	}
